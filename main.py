@@ -10,6 +10,7 @@ import json
 import sys
 import os
 import argparse
+import time
 
 
 logger = logging.getLogger(__name__)
@@ -63,6 +64,8 @@ if __name__ == '__main__':
 
     # process next file
     for obj_ix, obj_key in enumerate(keys_pending):
+        time_start = time.time()
+
         obj_file_name = get_filename_from_key(obj_key)
         logger.info(f"Processing file: {obj_ix}/{len(keys_pending)}")
         logger.info(f"File Name: {obj_file_name}")
@@ -112,3 +115,6 @@ if __name__ == '__main__':
         reset_dir(OUT_DIR)
 
         logger.info(f"Cleaned up download dir")
+        time_end = time.time()
+        time_dur = time_end - time_start
+        logger.info(f"Processing time: {round(time_dur, 1)} seconds")
