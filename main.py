@@ -1,9 +1,8 @@
 from s3_handler import get_files_in_path
 from s3_handler import download_public_file
-from s3_handler import get_download_dir
 from s3_handler import get_filename_from_key
 from s3_handler import upload_file_to_s3
-from s3_handler import reset_download_dir
+from s3_handler import reset_dir
 from warc_parser import extract_from_archive
 from html_content_extractor import extract_doc
 import logging
@@ -33,12 +32,13 @@ assert 0 < int(month_id) < 13
 BUCKET_SOURCE = "commoncrawl"
 FILE_PREFIX = f"crawl-data/CC-NEWS/{year_id}/{month_id}"
 
-BUCKET_DESTINATION = "cooltext_commoncrawl"
+BUCKET_DESTINATION = "cooltext-commoncrawl"
 
+DOWNLOAD_DIR = "data/temp_dir"
 OUT_DIR = "data/out_dir"
 
-if not os.path.exists:
-    os.makedirs(OUT_DIR, exist_ok=True)
+os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+os.makedirs(OUT_DIR, exist_ok=True)
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -67,10 +67,9 @@ if __name__ == '__main__':
         logger.info(f"Processing file: {obj_ix}/{len(keys_pending)}")
         logger.info(f"File Name: {obj_file_name}")
 
-        destination_dir = get_download_dir()
         # download archive file
         # obj_key = "CC-NEWS-20200913085541-00012.warc.gz"
-        archive_path = download_public_file(obj_key, destination_dir)
+        archive_path = download_public_file(obj_key, DOWNLOAD_DIR)
         logger.info(f"File downloaded to: {archive_path}")
 
         # extract contents of archive
@@ -89,7 +88,8 @@ if __name__ == '__main__':
 
         # delete 'content' key
         for c in contents:
-            c.pop('content', None)
+            if "content" in c:
+                del c['content']
 
         # save results
         out_content = {"docs": contents}
@@ -108,5 +108,7 @@ if __name__ == '__main__':
         logger.info(f"File uploaded to: {dest_key}")
 
         # delete archive file
-        reset_download_dir()
+        reset_dir(DOWNLOAD_DIR)
+        reset_dir(OUT_DIR)
+
         logger.info(f"Cleaned up download dir")

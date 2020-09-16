@@ -33,15 +33,9 @@ def get_files_in_path(bucket: str, prefix: str, is_public) -> list:
     return object_keys
 
 
-def get_download_dir():
-    download_dir = "data/temp_dir/"
-    os.makedirs(download_dir, exist_ok=True)
-    return download_dir
-
-
-def reset_download_dir():
-    download_dir = "data/temp_dir/"
-    shutil.rmtree(download_dir)
+def reset_dir(mydir):
+    shutil.rmtree(mydir)
+    os.makedirs(mydir, exist_ok=True)
 
 
 def download_public_file(object_key, destination_dir):
@@ -61,4 +55,6 @@ def get_filename_from_key(obj_key):
 
 def upload_file_to_s3(path_local, bucket_dest, key_dest):
     s3 = get_s3_handle(is_public=False)
-    s3.Bucket(bucket_dest).upload_file(path_local, key_dest)
+    s3.upload_file(Filename=path_local,
+                   Bucket=bucket_dest,
+                   Key=key_dest)
