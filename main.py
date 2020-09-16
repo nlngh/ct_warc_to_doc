@@ -14,10 +14,12 @@ import time
 parser = argparse.ArgumentParser(description='WARC parser')
 parser.add_argument('month_id', type=str, help='month id, e.g. 01, 02, etc')
 parser.add_argument('year_id', type=str, default="2020", help='year id, e.g. 2020, 2019')
+parser.add_argument('month_half', type=str, help='month half')
 args = parser.parse_args()
 
 month_id = args.month_id
 year_id = args.year_id
+month_half = args.month_half
 
 print(f"Month ID: {month_id}")
 print(f"YEAR ID: {year_id}")
@@ -25,6 +27,7 @@ print(f"YEAR ID: {year_id}")
 assert len(month_id) == 2
 assert 0 < int(month_id) < 13
 
+assert month_half in ["first", "second", "third"]
 
 BUCKET_SOURCE = "commoncrawl"
 FILE_PREFIX = f"crawl-data/CC-NEWS/{year_id}/{month_id}"
@@ -58,12 +61,29 @@ if __name__ == '__main__':
     keys_pending = [obj_key for obj_key in keys_all if get_filename_from_key(obj_key) not in filenames_proc]
     print(f"File count in pending: {len(keys_pending)}")
 
+    keys_in_scope = []
+    for obj_key in keys_pending:
+        fname = get_filename_from_key(obj_key)
+        batch_prefix = f"CC-NEWS-{year_id}{month_id}"
+        key_day = fname[len(batch_prefix) :  len(batch_prefix) + 2]
+        key_day = int(key_day)
+        if month_half == "first":
+            if key_day < 11:
+                keys_in_scope.append(obj_key)
+        if month_half == "second":
+            if 10 < key_day < 21:
+                keys_in_scope.append(obj_key)
+        if month_half == "third":
+            if 20 < key_day:
+                keys_in_scope.append(obj_key)
+    print(f"File count in scope: {len(keys_in_scope)}")
+
     # process next file
-    for obj_ix, obj_key in enumerate(keys_pending):
+    for obj_ix, obj_key in enumerate(keys_in_scope):
         time_start = time.time()
 
         obj_file_name = get_filename_from_key(obj_key)
-        print(f"Processing file: {obj_ix}/{len(keys_pending)}")
+        print(f"Processing file: {obj_ix}/{len(keys_in_scope)}")
         print(f"File Name: {obj_file_name}")
 
         # download archive file

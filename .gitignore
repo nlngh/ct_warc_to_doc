@@ -4,3 +4,4 @@ data/
 # ignore env
 env
 .idea/
+__pycache__
