@@ -5,15 +5,11 @@ from s3_handler import upload_file_to_s3
 from s3_handler import reset_dir
 from warc_parser import extract_from_archive
 from html_content_extractor import extract_doc
-import logging
 import json
 import sys
 import os
 import argparse
 import time
-
-
-logger = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser(description='WARC parser')
 parser.add_argument('month_id', type=str, help='month id, e.g. 01, 02, etc')
@@ -23,8 +19,8 @@ args = parser.parse_args()
 month_id = args.month_id
 year_id = args.year_id
 
-logger.info(f"Month ID: {month_id}")
-logger.info(f"YEAR ID: {year_id}")
+print(f"Month ID: {month_id}")
+print(f"YEAR ID: {year_id}")
 
 assert len(month_id) == 2
 assert 0 < int(month_id) < 13
@@ -49,7 +45,7 @@ if __name__ == '__main__':
                                   prefix=FILE_PREFIX,
                                   is_public=True)
 
-    logger.info(f"File count in source: {len(keys_all)}")
+    print(f"File count in source: {len(keys_all)}")
 
     # remove processed files
     keys_processed = get_files_in_path(bucket=BUCKET_DESTINATION,
@@ -57,28 +53,28 @@ if __name__ == '__main__':
                                         is_public=False)
     # -5 is to remove the .json extension
     filenames_proc = [get_filename_from_key(obj_key)[:-5] for obj_key in keys_processed]
-    logger.info(f"File count in processed: {len(filenames_proc)}")
+    print(f"File count in processed: {len(filenames_proc)}")
 
     keys_pending = [obj_key for obj_key in keys_all if get_filename_from_key(obj_key) not in filenames_proc]
-    logger.info(f"File count in pending: {len(keys_pending)}")
+    print(f"File count in pending: {len(keys_pending)}")
 
     # process next file
     for obj_ix, obj_key in enumerate(keys_pending):
         time_start = time.time()
 
         obj_file_name = get_filename_from_key(obj_key)
-        logger.info(f"Processing file: {obj_ix}/{len(keys_pending)}")
-        logger.info(f"File Name: {obj_file_name}")
+        print(f"Processing file: {obj_ix}/{len(keys_pending)}")
+        print(f"File Name: {obj_file_name}")
 
         # download archive file
         # obj_key = "CC-NEWS-20200913085541-00012.warc.gz"
         archive_path = download_public_file(obj_key, DOWNLOAD_DIR)
-        logger.info(f"File downloaded to: {archive_path}")
+        print(f"File downloaded to: {archive_path}")
 
         # extract contents of archive
         # archive_path = "data/temp_dir/CC-NEWS-20200913085541-00012.warc.gz"
         contents, domain_blames = extract_from_archive(archive_path)
-        logger.info(f"Number of contents found: {len(contents)}")
+        print(f"Number of contents found: {len(contents)}")
 
         # further cleaning
         for ix, arch_content in enumerate(contents):
@@ -87,7 +83,7 @@ if __name__ == '__main__':
 
         # keep valid docs only
         contents = [c for c in contents if c["doc"] is not None]
-        logger.info(f"Number of docs with valid doc: {len(contents)}")
+        print(f"Number of docs with valid doc: {len(contents)}")
 
         # delete 'content' key
         for c in contents:
@@ -101,20 +97,20 @@ if __name__ == '__main__':
         out_path = os.path.join(OUT_DIR, out_filename)
         with open(out_path, "w") as f:
             f.write(out_content)
-        logger.info(f"Processed content written to: {out_path}")
+        print(f"Processed content written to: {out_path}")
 
         # upload file
         dest_key = os.path.join(FILE_PREFIX, out_filename)
         upload_file_to_s3(path_local=out_path,
                           bucket_dest=BUCKET_DESTINATION,
                           key_dest=dest_key)
-        logger.info(f"File uploaded to: {dest_key}")
+        print(f"File uploaded to: {dest_key}")
 
         # delete archive file
         reset_dir(DOWNLOAD_DIR)
         reset_dir(OUT_DIR)
 
-        logger.info(f"Cleaned up download dir")
+        print(f"Cleaned up download dir")
         time_end = time.time()
         time_dur = time_end - time_start
-        logger.info(f"Processing time: {round(time_dur, 1)} seconds")
+        print(f"Processing time: {round(time_dur, 1)} seconds")
