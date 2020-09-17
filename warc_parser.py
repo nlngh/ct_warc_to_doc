@@ -2,6 +2,10 @@ from bs4 import BeautifulSoup
 from warcio.archiveiterator import ArchiveIterator
 from langdetect import detect
 import sys
+from whitelist import load_whitelist
+
+
+whitelist = load_whitelist()
 
 
 BANNED_DOMAIN_EXTS = {"ad", "ae", "af", "ag", "al", "am", "ao", "aq", "ar", "at", "aw", "ax", "az", "ba", "bb", "bd",
@@ -88,6 +92,10 @@ def extract_from_archive(filepath):
 
                 #### keep docs if they are in english
                 record_data["content"] = content
+
+                if domain_name in whitelist:
+                    arch_contents.append(record_data)
+                    continue
 
                 # detect other contents
                 try:

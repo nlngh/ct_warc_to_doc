@@ -5,3 +5,5 @@ data/
 env
 .idea/
 __pycache__
+
+resources
