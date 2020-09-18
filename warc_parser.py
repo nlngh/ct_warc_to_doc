@@ -24,14 +24,23 @@ BANNED_DOMAIN_EXTS = {"ad", "ae", "af", "ag", "al", "am", "ao", "aq", "ar", "at"
                       "vu", "wf", "ws", "ye", "yt", "zm", "zw"}
 
 
-def get_domain_ext(url):
-    ext = url.split("/")[2].split(".")[-1]
-    return ext
-
-
 def get_domain_name(url):
-    domain_name = url.split("/")[2]
+    url_parts = url.split("/")
+    if len(url_parts) < 3:
+        return None
+    domain_name = url_parts[2]
     return domain_name
+
+
+def get_domain_ext(url):
+    domain_name = get_domain_name(url)
+    if domain_name is None:
+        return None
+
+    if "." not in domain_name:
+        return None
+    ext = domain_name.split(".")[-1]
+    return ext
 
 
 def get_text_selectolax(html):
