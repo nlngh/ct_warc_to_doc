@@ -74,10 +74,16 @@ def extract_from_archive(filepath):
                 #                     continue
                 url = record.rec_headers['WARC-Target-URI']
                 ext = get_domain_ext(url)
+                if ext is None:
+                    continue
+
                 if ext in BANNED_DOMAIN_EXTS:
                     continue
 
                 domain_name = get_domain_name(url)
+                if domain_name is None:
+                    continue
+
                 if domain_name in domain_blames:
                     if domain_blames[domain_name] >= BLAME_THRESH:
                         continue
